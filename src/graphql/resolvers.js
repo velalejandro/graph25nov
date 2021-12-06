@@ -2,18 +2,28 @@ import Curso from "../models/Curso";
 import { Cursos } from "../data/cursos";
 import Usuario from "../models/Usuario";
 import bcrypt from "bcrypt";
+import { generarJWT } from "../helpers/jwt";
 
 export const resolvers = {
     Query: {
         Hola: (parent, args) => {
             return "Hola " + args.nombre;
         },
-        Cursos(){
+        Cursos(_,args,context){
 
             //devuelve desde el arreglo 
             //return Cursos
             // devuelve desde mongoDb
-            return Curso.find();
+            console.log(context);
+            if(context.user.auth)
+            {
+                return Curso.find();
+            }
+            else
+            {
+                return null;
+            }
+            
         },
         async Login(_,{email,password}) {
             
@@ -27,10 +37,11 @@ export const resolvers = {
             }
 
             const validarPassword = bcrypt.compareSync(password,usuario.password)
-           
+            
             if(validarPassword)
             {
-                return "exitoso";
+                const token = await generarJWT(usuario.id,usuario.nombre);
+                return token;
             }
             else
             {
